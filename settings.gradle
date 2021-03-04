@@ -1,0 +1,3 @@
+rootProject.name='BaseSliceDemo'
+include ':app'
+include ':base'

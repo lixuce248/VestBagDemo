@@ -1,0 +1,84 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        flavorDimensions "lee"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        app {
+            storeFile file('keystore')
+            storePassword "123456"
+            keyAlias 'slice'
+            keyPassword "123456"
+        }
+    }
+    buildTypes {
+        release {
+
+            debuggable false
+            minifyEnabled true
+            // Zipalign优化
+            zipAlignEnabled true
+            // 移除无用的resource文件
+            shrinkResources true
+            signingConfig signingConfigs.app
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            debuggable true
+            signingConfig signingConfigs.app
+            zipAlignEnabled false
+            shrinkResources false
+            minifyEnabled false
+        }
+    }
+
+    //多渠道配置
+    productFlavors {
+        app {//主包app
+            applicationId "com.example.baseslicedemo"
+            versionName "1.0.0"
+            buildConfigField "String", "channel", "\"10000\""
+
+        }
+        app1 {//马甲包app
+            applicationId "com.example.baseslicedemo1"
+            versionName "1.0.0"
+            //马甲包不同的配置 可以在这里设置  我这里设置的是渠道  可以自行配置
+            buildConfigField "String", "channel", "\"10001\""
+        }
+    }
+
+    //jenckins 自动化多渠道打包配置
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def newName
+            newName = "${applicationId}-" + variant.buildType.name + ".apk"
+            outputFileName = new File(newName)
+            println "outputPath:" + variant.getPackageApplication().outputDirectory
+        }
+        variant.assemble.doLast {
+            println "outputPath:" + variant.getPackageApplication().outputDirectory + "/output.json"
+            delete "${variant.getPackageApplication().outputDirectory}/output.json"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation project(path: ':base')
+}
